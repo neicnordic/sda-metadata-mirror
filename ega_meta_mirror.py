@@ -2,7 +2,7 @@
 
 Starting with the list of datasets mirror all data related to that specific dataset.
 """
-from typing import Dict, Generator, Iterable
+from typing import Generator, Iterable
 import requests
 import itertools
 import json
@@ -22,14 +22,9 @@ BASE_URL = 'https://ega-archive.org/metadata/v2/'
 ENDPOINTS = ["analyses", "dacs", "runs", "samples", "studies", "files"]
 
 
-def process_result(response: Dict) -> Generator:
-    """Process response metadata and get all results."""
-    for i in response["response"]["result"]:
-        yield i
-
-
-def retrieve_data(data_type: str, dataset_id: str) -> Generator:
+def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
     """Retrieve data by object type and dataset ID."""
+    s = requests.Session()
     skip: int = 0
     limit: int = 10
     has_more = True
@@ -38,12 +33,12 @@ def retrieve_data(data_type: str, dataset_id: str) -> Generator:
                "skip": str(skip),
                "limit": str(limit)}
     while has_more:
-        r = requests.get(f'{BASE_URL}{data_type}', params=payload)
+        r = s.get(f'{BASE_URL}{data_type}', params=payload)
         if r.status_code == 200:
             response = r.json()
             results_nb = int(response["response"]["numTotalResults"])
             LOG.info(f"Retrieving {limit} {data_type} for {dataset_id} from {results_nb} results.")
-            for res in process_result(response):
+            for res in response["response"]["result"]:
                 yield res
 
             if results_nb >= limit:
@@ -55,20 +50,21 @@ def retrieve_data(data_type: str, dataset_id: str) -> Generator:
             has_more = False
 
 
-def process_datasets(start_limit: int = 0, defined_limit: int = 10) -> Generator:
+def get_datasets(start_limit: int = 0, defined_limit: int = 10) -> Generator:
     """Retrieve datasets from EGA."""
+    s = requests.Session()
     skip: int = start_limit
     limit: int = defined_limit
     has_more = True
     payload = {"skip": str(skip),
                "limit": str(limit)}
     while has_more:
-        r = requests.get(f'{BASE_URL}datasets', params=payload)
+        r = s.get(f'{BASE_URL}datasets', params=payload)
         if r.status_code == 200:
             response = r.json()
             results_nb = int(response["response"]["numTotalResults"])
             LOG.info(f"Retrieving {defined_limit} from {results_nb} results starting from {start_limit} results.")
-            for res in process_result(response):
+            for res in response["response"]["result"]:
                 yield res
 
             if results_nb >= limit and not defined_limit:
@@ -80,26 +76,26 @@ def process_datasets(start_limit: int = 0, defined_limit: int = 10) -> Generator
             has_more = False
 
 
-def retrieve_dataset_info(dataset_id: str) -> Generator:
+def get_dataset_objects(dataset_id: str) -> Generator:
     """Retrieve information associated to dataset."""
     raw_events: Iterable = iter(())
     for endpoint in ENDPOINTS:
         LOG.info(f"Processing {endpoint} for {dataset_id} ...")
-        yield itertools.chain(raw_events, retrieve_data(endpoint, dataset_id))
+        yield itertools.chain(raw_events, get_dataset_object(endpoint, dataset_id))
 
 
-def main(start: int = 0, limit: int = 1) -> None:
+def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
     """Build pipeline to mirror metadata."""
-    datasets = process_datasets(start_limit=start, defined_limit=limit)
-    results: Iterable = iter(())
+    datasets = get_datasets(start_limit=start, defined_limit=limit)
+    objects: Iterable = iter(())
     for dataset in datasets:
         LOG.info(f"Processing {dataset['egaStableId']} ...")
         Path(dataset["egaStableId"]).mkdir(parents=True, exist_ok=True)
         with open(f'{dataset["egaStableId"]}/dataset_{dataset["egaStableId"]}.json', 'w') as datasetfile:
             json.dump(dataset, datasetfile)
-        results = retrieve_dataset_info(dataset["egaStableId"])
+        objects = get_dataset_objects(dataset["egaStableId"])
 
-        for idx, val in enumerate(results):
+        for idx, val in enumerate(objects):
             with open(f'{dataset["egaStableId"]}/data_{dataset["egaStableId"]}_{ENDPOINTS[idx]}.json', 'w') as datafile:
                 the_data = list(val)
                 json.dump(the_data, datafile)
@@ -115,7 +111,7 @@ def cli(limit_results: int, skip_results: int):
     Skip parameter is used to create pipelines to resume querying datasets from a specific point the dataset list.
     """
     LOG.info(f"Start ==== >")
-    main(start=skip_results, limit=limit_results)
+    mirror_pipeline(start=skip_results, limit=limit_results)
     LOG.info(f"< ==== End")
 
 if __name__ == "__main__":
