@@ -106,8 +106,8 @@ def main(start: int = 0, limit: int = 1) -> None:
 
 
 @click.command()
-@click.option('-limit', '--limit-results', default=1)
-@click.option('-skip', '--skip-results', default=0)
+@click.option('-l', '--limit-results', default=1)
+@click.option('-s', '--skip-results', default=0)
 def cli(limit_results: int, skip_results: int):
     """Mirror EGA dataset information.
 
