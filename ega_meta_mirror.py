@@ -43,6 +43,7 @@ def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
 
             if results_nb >= limit:
                 limit += 10
+                skip += 10
             else:
                 has_more = False
         else:
@@ -69,6 +70,7 @@ def get_datasets(start_limit: int = 0, defined_limit: int = 10) -> Generator:
 
             if results_nb >= limit and not defined_limit:
                 limit += 10
+                skip += 10
             else:
                 has_more = False
         else:
