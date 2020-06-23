@@ -20,11 +20,11 @@ LOG.setLevel(logging.DEBUG)
 
 BASE_URL = 'https://ega-archive.org/metadata/v2/'
 ENDPOINTS = ["analyses", "dacs", "runs", "samples", "studies", "files"]
+SESSION = requests.Session()
 
 
 def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
     """Retrieve data by object type and dataset ID."""
-    s = requests.Session()
     skip: int = 0
     limit: int = 10
     has_more = True
@@ -33,7 +33,7 @@ def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
                "skip": str(skip),
                "limit": str(limit)}
     while has_more:
-        r = s.get(f'{BASE_URL}{data_type}', params=payload)
+        r = SESSION.get(f'{BASE_URL}{data_type}', params=payload)
         if r.status_code == 200:
             response = r.json()
             results_nb = int(response["response"]["numTotalResults"])
@@ -53,14 +53,13 @@ def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
 
 def get_datasets(start_limit: int = 0, defined_limit: int = 10) -> Generator:
     """Retrieve datasets from EGA."""
-    s = requests.Session()
     skip: int = start_limit
     limit: int = defined_limit
     has_more = True
     payload = {"skip": str(skip),
                "limit": str(limit)}
     while has_more:
-        r = s.get(f'{BASE_URL}datasets', params=payload)
+        r = SESSION.get(f'{BASE_URL}datasets', params=payload)
         if r.status_code == 200:
             response = r.json()
             results_nb = int(response["response"]["numTotalResults"])
