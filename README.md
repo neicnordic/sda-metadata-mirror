@@ -35,3 +35,8 @@ The script can be run using:
 
 * `python ega_meta_mirror.py -limit 1 -skip 0`
 * `python ega_meta_mirror.py -limit 2`
+
+
+#### Using the Metadata 
+
+In order use the metadata into a Standalone Sensitive Data Archive the data can be imported into an existing MongoDB or a new one.
