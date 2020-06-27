@@ -93,13 +93,13 @@ def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
         LOG.info(f"Processing {dataset['egaStableId']} ...")
         Path(dataset["egaStableId"]).mkdir(parents=True, exist_ok=True)
         with open(f'{dataset["egaStableId"]}/dataset_{dataset["egaStableId"]}.json', 'w') as datasetfile:
-            json.dump(dataset, datasetfile)
+            json.dump(dataset, datasetfile, indent=4)
         objects = get_dataset_objects(dataset["egaStableId"])
 
         for idx, val in enumerate(objects):
             with open(f'{dataset["egaStableId"]}/data_{dataset["egaStableId"]}_{ENDPOINTS[idx]}.json', 'w') as datafile:
                 the_data = list(val)
-                json.dump(the_data, datafile)
+                json.dump(the_data, datafile, indent=4)
 
 
 @click.command()
