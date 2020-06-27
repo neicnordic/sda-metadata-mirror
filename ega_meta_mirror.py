@@ -2,7 +2,7 @@
 
 Starting with the list of datasets mirror all data related to that specific dataset.
 """
-from typing import Generator, Iterable
+from typing import Generator, Iterable, Dict, Union
 import requests
 import itertools
 import json
@@ -21,6 +21,26 @@ LOG.setLevel(logging.DEBUG)
 BASE_URL = 'https://ega-archive.org/metadata/v2/'
 ENDPOINTS = ["analyses", "dacs", "runs", "samples", "studies", "files"]
 SESSION = requests.Session()
+
+
+def get_policy(policy_id: str) -> Union[Dict, None]:
+    """Retrieve data by object type and dataset ID.
+
+    We are expecting always one policy
+    """
+    r = SESSION.get(f'{BASE_URL}policies/{policy_id}')
+    if r.status_code == 200:
+        response = r.json()
+        if response["response"]["numTotalResults"] == 1:
+            LOG.info(f"Retrieving policy {policy_id}.")
+            return response["response"]["result"]
+        else:
+            LOG.error(f"we got more thatn 1 policy")
+            return None
+
+    else:
+        LOG.error(f"Error retrieving policy {policy_id}. API call returned a {r.status_code}")
+        return None
 
 
 def get_dataset_object(data_type: str, dataset_id: str) -> Generator:
@@ -95,11 +115,17 @@ def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
         with open(f'{dataset["egaStableId"]}/dataset_{dataset["egaStableId"]}.json', 'w') as datasetfile:
             json.dump(dataset, datasetfile, indent=4)
         objects = get_dataset_objects(dataset["egaStableId"])
+        
+        with open(f'{dataset["egaStableId"]}/data_{dataset["egaStableId"]}_policy.json', 'w') as policy_datafile:
+            policy_data = get_policy(dataset["policyStableId"])
+            json.dump(policy_data, policy_datafile, indent=4)
 
         for idx, val in enumerate(objects):
             with open(f'{dataset["egaStableId"]}/data_{dataset["egaStableId"]}_{ENDPOINTS[idx]}.json', 'w') as datafile:
                 the_data = list(val)
                 json.dump(the_data, datafile, indent=4)
+
+        
 
 
 @click.command()
