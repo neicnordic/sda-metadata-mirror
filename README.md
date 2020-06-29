@@ -17,12 +17,12 @@ Check if installed properly:
 ➜ python ega_meta_mirror.py --help
 Usage: ega_meta_mirror.py [OPTIONS]
 
-  Mirror EGA dataset information.
+  Mirror EGA dataset metadata information.
 
   In order to use limit the amount of requests the limit represents the
   number of datasets to query per run. Skip parameter is used to create
   pipelines to resume querying datasets from a specific point the dataset
-  list.
+  list. Using the -d option allows to specify the dataset to mirror.
 
 Options:
   -l, --limit-results INTEGER  Number of results.

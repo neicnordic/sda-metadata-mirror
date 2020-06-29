@@ -156,10 +156,11 @@ def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
 @click.option('-s', '--skip-results', default=0, help="Skip the first n results.")
 @click.option('-d', '--dataset', help="Download a specific dataset, will ignore limit and skip options.")
 def cli(limit_results: int, skip_results: int, dataset: str):
-    """Mirror EGA dataset information.
+    """Mirror EGA dataset metadata information.
 
     In order to use limit the amount of requests the limit represents the number of datasets to query per run.
     Skip parameter is used to create pipelines to resume querying datasets from a specific point the dataset list.
+    Using the -d option allows to specify the dataset to mirror.
     """
     LOG.info(f"Start ==== >")
     if dataset:
