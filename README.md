@@ -25,16 +25,20 @@ Usage: ega_meta_mirror.py [OPTIONS]
   list.
 
 Options:
-  -limit, --limit-results INTEGER
-  -skip, --skip-results INTEGER
-  --help                          Show this message and exit.
+  -l, --limit-results INTEGER  Number of results.
+  -s, --skip-results INTEGER   Skip the first n results.
+  -d, --dataset TEXT           Download a specific dataset, will ignore limit
+                               and skip options.
 
+  --help                       Show this message and exit.
 ```
 
 The script can be run using:
 
-* `python ega_meta_mirror.py -limit 1 -skip 0`
-* `python ega_meta_mirror.py -limit 2`
+* `python ega_meta_mirror.py -l 1 -s 0` for mirroring first dataset;
+* `python ega_meta_mirror.py -l 2 -s 3` for mirroring 2 datasets after the first 3;
+* `python ega_meta_mirror.py -l 4 ` - for mirroring first 4 datasets;
+* `python ega_meta_mirror.py -d EGAD00001002894` - for mirroring dataset `EGAD00001002894`.
 
 
 #### Using the Metadata 

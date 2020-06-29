@@ -105,6 +105,30 @@ def get_dataset_objects(dataset_id: str) -> Generator:
         yield itertools.chain(raw_events, get_dataset_object(endpoint, dataset_id))
 
 
+def mirror_dataset(dataset: str) -> None:
+    """Write data to JSON file."""
+    if not dataset.startswith('EGAD'):
+        raise ValueError(f"{dataset} does not appear to be a valid EGA dataset.")
+    r = SESSION.get(f'{BASE_URL}datasets/{dataset}')
+    if r.status_code == 200:
+        response = r.json()
+        LOG.info(f"Retrieving dataset {dataset}.")
+        LOG.info(f"Processing {dataset} ...")
+        Path(dataset).mkdir(parents=True, exist_ok=True)
+        with open(f'{dataset}/dataset_{dataset}.json', 'w') as datasetfile:
+            json.dump(response["response"]["result"][0], datasetfile, indent=4)
+        objects = get_dataset_objects(dataset)
+
+        with open(f'{dataset}/data_{dataset}_policy.json', 'w') as policy_datafile:
+            policy_data = get_policy(response["response"]["result"][0]["policyStableId"])
+            json.dump(policy_data, policy_datafile, indent=4)
+
+        for idx, val in enumerate(objects):
+            with open(f'{dataset}/data_{dataset}_{ENDPOINTS[idx]}.json', 'w') as datafile:
+                the_data = list(val)
+                json.dump(the_data, datafile, indent=4)
+
+
 def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
     """Build pipeline to mirror metadata."""
     datasets = get_datasets(start_limit=start, defined_limit=limit)
@@ -115,7 +139,7 @@ def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
         with open(f'{dataset["egaStableId"]}/dataset_{dataset["egaStableId"]}.json', 'w') as datasetfile:
             json.dump(dataset, datasetfile, indent=4)
         objects = get_dataset_objects(dataset["egaStableId"])
-        
+
         with open(f'{dataset["egaStableId"]}/data_{dataset["egaStableId"]}_policy.json', 'w') as policy_datafile:
             policy_data = get_policy(dataset["policyStableId"])
             json.dump(policy_data, policy_datafile, indent=4)
@@ -125,20 +149,23 @@ def mirror_pipeline(start: int = 0, limit: int = 1) -> None:
                 the_data = list(val)
                 json.dump(the_data, datafile, indent=4)
 
-        
 
 
 @click.command()
-@click.option('-l', '--limit-results', default=1)
-@click.option('-s', '--skip-results', default=0)
-def cli(limit_results: int, skip_results: int):
+@click.option('-l', '--limit-results', default=1, help='Number of results.')
+@click.option('-s', '--skip-results', default=0, help="Skip the first n results.")
+@click.option('-d', '--dataset', help="Download a specific dataset, will ignore limit and skip options.")
+def cli(limit_results: int, skip_results: int, dataset: str):
     """Mirror EGA dataset information.
 
     In order to use limit the amount of requests the limit represents the number of datasets to query per run.
     Skip parameter is used to create pipelines to resume querying datasets from a specific point the dataset list.
     """
     LOG.info(f"Start ==== >")
-    mirror_pipeline(start=skip_results, limit=limit_results)
+    if dataset:
+        mirror_dataset(dataset)
+    else:
+        mirror_pipeline(start=skip_results, limit=limit_results)
     LOG.info(f"< ==== End")
 
 if __name__ == "__main__":
