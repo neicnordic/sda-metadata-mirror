@@ -1,5 +1,5 @@
 > ### Archival notice
-> :warning: **This repository is no longer maintained, and the EGA metadata API has been changed, for new specification see: https://metadata.ega-archive.org/spec/#/ and https://ega-archive.org/access/download/metadata/
+> :warning: **This repository is no longer maintained, and the EGA metadata API has been changed, for new specification see: https://metadata.ega-archive.org/spec/#/ and https://ega-archive.org/access/download/metadata/**
 
 ## Mirror Metadata from EGA 
 
